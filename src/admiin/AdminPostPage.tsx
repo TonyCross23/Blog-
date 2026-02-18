@@ -1,147 +1,105 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { Label } from "../components/ui/label";
-import { Input } from "../components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Textarea } from "../components/ui/textarea";
+import { Plus, Pencil, Trash2, LayoutGrid } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Badge } from "../components/ui/badge";
+import { CreateCategoryModal } from "../components/CreateCategoryModal";
+import { CreatePostModal } from "../components/CreatePostModal";
 
-interface Category {
+interface Post {
     id: string;
-    name: string;
+    title: string;
+    created_at: string;
+    categories: { name: string };
 }
 
 export default function AdminPostPage() {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [catLoading, setCatLoading] = useState(false);
-
-    const fetchCategories = async () => {
-        const { data, error } = await supabase.from('categories').select('*').order('name');
-        if (error) toast.error("Categories ဆွဲလို့မရပါ");
-        else setCategories(data || []);
-    };
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchCategories();
+        fetchPosts();
     }, []);
 
-    // --- Category အသစ်တိုးတဲ့ Logic ---
-    const handleCategorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setCatLoading(true);
-
-        const formData = new FormData(e.currentTarget);
-        const catName = formData.get("category_name") as string;
-
-        const { error } = await supabase.from('categories').insert([{ name: catName }]);
-
-        if (error) {
-            toast.error("Category တိုးလို့မရပါ: " + error.message);
-        } else {
-            toast.success("Category အသစ် ထည့်ပြီးပါပြီ!");
-            (e.target as HTMLFormElement).reset();
-            fetchCategories(); // List ကို Update လုပ်မယ်
-        }
-        setCatLoading(false);
-    };
-
-    // --- Post အသစ်တင်တဲ့ Logic ---
-    const handlePostSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const fetchPosts = async () => {
         setLoading(true);
+        const { data, error } = await supabase
+            .from("posts")
+            .select("id, title, created_at, categories(name)")
+            .order("created_at", { ascending: false });
 
-        const formData = new FormData(e.currentTarget);
-        const postData = {
-            title: formData.get("title") as string,
-            summary: formData.get("summary") as string,
-            description: formData.get("description") as string,
-            category_id: formData.get("category_id") as string,
-        };
-
-        const { error } = await supabase.from('posts').insert([postData]);
-
-        if (error) {
-            toast.error("Error: " + error.message);
-        } else {
-            toast.success("Post တင်ပြီးပါပြီ!");
-            (e.target as HTMLFormElement).reset();
-        }
+        if (error) toast.error("Data ဆွဲလို့မရပါ");
+        else setPosts(data as any);
         setLoading(false);
     };
 
+    const deletePost = async (id: string) => {
+        if (!confirm("ဒီ Post ကို ဖျက်မှာ သေချာသလား?")) return;
+        const { error } = await supabase.from("posts").delete().eq("id", id);
+        if (error) toast.error("ဖျက်လို့မရပါ");
+        else {
+            toast.success("ဖျက်ပြီးပါပြီ");
+            fetchPosts();
+        }
+    };
+
     return (
-        <div className="p-10 flex flex-col items-center space-y-8">
+        <div className="container mx-auto p-6 space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Post Management</h1>
+                    <p className="text-muted-foreground">သင့် Blog ပို့စ်များကို ဤနေရာတွင် စီမံခန့်ခွဲပါ။</p>
+                </div>
 
-            {/* 1. Category Create Card */}
-            <Card className="w-full max-w-2xl border-dashed border-2">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <PlusCircle className="w-5 h-5" />
-                        Add New Category
-                    </CardTitle>
-                    <CardDescription>Post မတင်ခင် အမျိုးအစား အသစ်ရှိရင် အရင်တိုးပါ</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleCategorySubmit} className="flex gap-4">
-                        <Input
-                            name="category_name"
-                            placeholder="ဥပမာ- နည်းပညာ၊ ဗဟုသုတ"
-                            required
-                            className="flex-1"
-                        />
-                        <Button type="submit" variant="secondary" disabled={catLoading}>
-                            {catLoading ? "Adding..." : "Add Category"}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+                <div className="flex gap-3">
+                    <CreateCategoryModal onCreated={fetchPosts} />
+                    <CreatePostModal onCreated={fetchPosts} />
+                </div>
+            </div>
 
-            {/* 2. Post Create Card */}
-            <Card className="w-full max-w-2xl shadow-lg">
-                <CardHeader>
-                    <CardTitle>Create New Blog Post</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handlePostSubmit} className="space-y-4">
-                        <div>
-                            <Label htmlFor="title">Title</Label>
-                            <Input id="title" name="title" placeholder="ပို့စ်ခေါင်းစဉ်" required />
-                        </div>
-
-                        <div>
-                            <Label>Category</Label>
-                            <Select name="category_id" required>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="အမျိုးအစား ရွေးချယ်ပါ" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categories.map((c) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div>
-                            <Label htmlFor="summary">Summary</Label>
-                            <Input id="summary" name="summary" placeholder="ပို့စ်အကျဉ်းချုပ်" required />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea id="description" name="description" placeholder="အသေးစိတ်ရေးသားရန်" rows={6} required />
-                        </div>
-
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? "တင်နေပါသည်..." : "Publish Post"}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+            <div className="border rounded-lg bg-white shadow-sm">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[400px]">Title</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>
+                        ) : posts.length === 0 ? (
+                            <TableRow><TableCell colSpan={4} className="text-center">ပို့စ်များ မရှိသေးပါ။</TableCell></TableRow>
+                        ) : (
+                            posts.map((post) => (
+                                <TableRow key={post.id}>
+                                    <TableCell className="font-medium">{post.title}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="secondary">
+                                            {post.categories?.name || "Uncategorized"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-gray-500">
+                                        {new Date(post.created_at).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell className="text-right space-x-2">
+                                        <Button variant="ghost" size="icon" className="hover:text-blue-600">
+                                            <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="hover:text-red-600" onClick={() => deletePost(post.id)}>
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 }
