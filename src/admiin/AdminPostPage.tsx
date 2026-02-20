@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, LayoutGrid } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Badge } from "../components/ui/badge";
@@ -10,7 +10,7 @@ import { CreatePostModal } from "../components/CreatePostModal";
 
 interface Post {
     id: string;
-    title: string;
+    summary: string;
     created_at: string;
     categories: { name: string };
 }
@@ -27,9 +27,9 @@ export default function AdminPostPage() {
         setLoading(true);
         const { data, error } = await supabase
             .from("posts")
-            .select("id, title, created_at, categories(name)")
+            .select("id, summary, created_at, categories(name)")
             .order("created_at", { ascending: false });
-
+        
         if (error) toast.error("Data ဆွဲလို့မရပါ");
         else setPosts(data as any);
         setLoading(false);
@@ -50,7 +50,6 @@ export default function AdminPostPage() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Post Management</h1>
-                    <p className="text-muted-foreground">သင့် Blog ပို့စ်များကို ဤနေရာတွင် စီမံခန့်ခွဲပါ။</p>
                 </div>
 
                 <div className="flex gap-3">
@@ -63,7 +62,7 @@ export default function AdminPostPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[400px]">Title</TableHead>
+                            <TableHead className="w-[400px]">Summary</TableHead>
                             <TableHead>Category</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -77,7 +76,7 @@ export default function AdminPostPage() {
                         ) : (
                             posts.map((post) => (
                                 <TableRow key={post.id}>
-                                    <TableCell className="font-medium">{post.title}</TableCell>
+                                    <TableCell className="font-medium">{post.summary}</TableCell>
                                     <TableCell>
                                         <Badge variant="secondary">
                                             {post.categories?.name || "Uncategorized"}

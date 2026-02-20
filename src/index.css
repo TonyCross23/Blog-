@@ -1,8 +1,28 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+
+@layer base {
+    .prose strong {
+        font-weight: 800 !important;
+        color: inherit;
+    }
+
+    .prose h1,
+    .prose h2,
+    .prose h3 {
+        font-weight: 900 !important;
+        margin-top: 1.5em !important;
+        margin-bottom: 0.5em !important;
+    }
+
+    .prose p {
+        margin-bottom: 1.25em !important;
+    }
+}
 
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
@@ -115,10 +135,11 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

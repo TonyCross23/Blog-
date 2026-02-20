@@ -5,6 +5,8 @@ import AdminPostPage from "./admiin/AdminPostPage";
 import ProfilePage from "./admiin/ProfilePage";
 import Home from "./pages/Home";
 import { Navbar } from "./components/Navbar";
+import PostDetails from "./pages/PostDetails";
+import { GuestRoute } from "./routes/GuestRoute";
 
 export const App = () => {
   return (
@@ -12,9 +14,10 @@ export const App = () => {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
 
           <Route path="/" element={<Home />} />
+          <Route path="/post/:id" element={<PostDetails />} />
 
           <Route path="/profile" element={
             <ProtectedRoute>
