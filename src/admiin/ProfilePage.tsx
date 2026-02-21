@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
+import { Bell, BellOff, User, Mail } from "lucide-react";
 
 export default function ProfilePage() {
   const { profile, loading } = useAuth();
-  
-  // Local State: Page Refresh မဖြစ်စေဖို့ သုံးပါတယ်
   const [isMuted, setIsMuted] = useState(false);
 
-  // Auth ကနေ profile data ရလာတာနဲ့ state ကို update လုပ်မယ်
   useEffect(() => {
     if (profile) {
       setIsMuted(!!profile.send_emails);
@@ -21,12 +19,9 @@ export default function ProfilePage() {
 
   const handleToggle = async (checked: boolean) => {
     if (!profile) return;
-
-    // ၁။ UI ကို အရင် Update လုပ်မယ် (Refresh မဖြစ်စေချင်လို့)
     setIsMuted(checked);
 
     try {
-      // ၂။ Supabase မှာ သွားပြင်မယ်
       const { error } = await supabase
         .from('profiles')
         .update({ send_emails: checked })
@@ -34,59 +29,94 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      // ၃။ Alert ပြတဲ့ Logic (False ဆိုမှ Alert ပြမယ်)
       if (checked === false) {
-        toast.info("သင့်ထံသို့ Email များ ပေးပို့ပါတော့မည်", {
-          description: "ပို့စ်အသစ်တင်တိုင်း အကြောင်းကြားစာ ရောက်လာပါလိမ့်မည်။",
+        toast.info("Notifications Enabled", {
+          description: "You will receive emails when new posts are published.",
         });
       } else {
-        toast.success("Email ပို့ခြင်းကို ရပ်တန့်လိုက်ပါပြီ");
+        toast.success("Notifications Muted");
       }
-      
-      // window.location.reload(); <-- ဒါကို ဖြုတ်လိုက်ပြီဖြစ်လို့ Refresh မဖြစ်တော့ပါဘူး
     } catch (error: any) {
-      // Error ဖြစ်ရင် UI ကို အဟောင်းအတိုင်း ပြန်ပြောင်းမယ်
       setIsMuted(!checked);
-      toast.error("Update လုပ်လို့မရပါ: " + error.message);
+      toast.error("Update failed: " + error.message);
     }
   };
 
   if (loading) return (
-    <div className="p-10 text-center font-bold text-gray-400 animate-pulse tracking-widest">
-      LOADING PROFILE...
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-[10px] font-black tracking-[0.4em] text-slate-400 animate-pulse uppercase">
+        Retrieving Profile...
+      </div>
     </div>
   );
 
   return (
-    <div className="p-10 flex justify-center">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden">
-        <CardHeader className="bg-slate-50/50 pb-6">
-          <CardTitle className="text-2xl font-black tracking-tight text-slate-900">Notifications</CardTitle>
-          <p className="text-sm font-bold text-slate-400">{profile?.email}</p>
-        </CardHeader>
+    <div className="min-h-screen bg-white dark:bg-[#020617] transition-colors duration-300 py-12 px-6">
+      <div className="max-w-xl mx-auto space-y-8">
         
-        <CardContent className="space-y-6 py-8">
-          <div className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100 transition-all">
-            <div className="space-y-1">
-              <Label className="text-base font-extrabold text-slate-800 cursor-pointer">
-                Mute Notifications
-              </Label>
-              <p className="text-[12px] text-slate-500 font-medium">
-                {isMuted 
-                  ? "Blog အသစ်တင်တိုင်း Email ပို့ခြင်းကို ပိတ်ထားသည်" 
-                  : "Blog အသစ်တင်တိုင်း Email ပို့ခြင်းကို ဖွင့်ထားသည်"}
-              </p>
+        {/* Page Heading */}
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">Profile Settings</h1>
+          <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">Manage your account preferences</p>
+        </div>
+
+        {/* User Info Card */}
+        <Card className="rounded-none border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-2xl overflow-hidden border-t-4 border-t-black dark:border-t-white">
+          <CardContent className="p-8 space-y-8">
+            <div className="flex items-center gap-6">
+              <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 flex items-center justify-center border dark:border-slate-700 shadow-inner">
+                <User className="w-10 h-10 text-slate-400" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Account Email</p>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">{profile?.email}</p>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <Switch 
-              checked={isMuted}
-              onCheckedChange={handleToggle}
-              className="data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-green-500 transition-all duration-300 scale-110"
-            />
-          </div>
+        {/* Notification Settings */}
+        <div className="space-y-4">
+          <h2 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase ml-1">Privacy & Alerts</h2>
+          
+          <Card className="rounded-none border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-xl">
+            <CardContent className="p-0">
+              <div className="flex items-center justify-between p-8 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                <div className="flex gap-5 items-start">
+                  <div className={`p-3 rounded-none border ${isMuted ? 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-900/50 text-red-500' : 'bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-900/50 text-green-500'}`}>
+                    {isMuted ? <BellOff className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white cursor-pointer">
+                      Mute Email Notifications
+                    </Label>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[280px]">
+                      {isMuted 
+                        ? "Currently silent. You won't receive any email alerts for new blog updates." 
+                        : "Currently active. We'll notify you whenever a new story is published."}
+                    </p>
+                  </div>
+                </div>
 
-        </CardContent>
-      </Card>
+                <Switch 
+                  checked={isMuted}
+                  onCheckedChange={handleToggle}
+                  className="data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-800 scale-125 transition-all"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Info Box */}
+        <div className="p-6 bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 flex gap-4 items-center">
+          <Mail className="w-5 h-5 text-slate-400" />
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose">
+            Your preferences are saved automatically and synced across all your active devices.
+          </p>
+        </div>
+
+      </div>
     </div>
   );
 }

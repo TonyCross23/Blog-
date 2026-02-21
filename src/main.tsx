@@ -5,14 +5,17 @@ import { AuthProvider } from "./context/AuthContext";
 import { App } from './App';
 import { Toaster } from './components/ui/sonner';
 import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from './components/ThemeProvider';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-        <Toaster position="top-right" richColors />
-      </AuthProvider>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+          <Toaster position="top-right" richColors />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>,
 )
