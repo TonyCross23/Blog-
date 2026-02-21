@@ -1,56 +1,55 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MdEditor } from 'md-editor-rt';
-import { Loader2 } from "lucide-react";
-import 'md-editor-rt/lib/style.css';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { useUpdatePost } from "../hooks/useAdmin";
+import { Loader2, Image as ImageIcon, X } from "lucide-react"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useUpdatePost } from "../hooks/useAdmin"; 
 import { editPostSchema, type EditPostFormValues } from "../validation/editPost";
+import { useCategories } from "@/hooks/usePosts";
 
 export function EditPostModal({ post, open, setOpen }: any) {
-    // TanStack Query Hook
     const updateMutation = useUpdatePost();
+    const { data: categories = [] } = useCategories();
+    const [file, setFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-    // React Hook Form setup
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        watch,
-        reset,
-        formState: { errors }
-    } = useForm<EditPostFormValues>({
+    const { register, handleSubmit, control, reset } = useForm<EditPostFormValues>({
         resolver: zodResolver(editPostSchema),
-        defaultValues: {
-            title: "",
-            summary: "",
-            description: ""
-        }
     });
 
     useEffect(() => {
-        if (post) {
+        if (post && open) {
             reset({
                 title: post.title,
                 summary: post.summary,
-                description: post.description
+                description: post.description,
+                categoryId: post.category_id || post.categories?.id || ""
             });
+            setPreviewUrl(post.image_url || null);
+            setFile(null);
         }
-    }, [post, reset]);
+    }, [post, reset, open]);
 
-    const description = watch("description");
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0];
+        if (selected) {
+            setFile(selected);
+            setPreviewUrl(URL.createObjectURL(selected));
+        }
+    };
 
     const onSubmit = (data: EditPostFormValues) => {
         updateMutation.mutate(
-            { id: post.id, updates: data },
+            { id: post.id, updates: data, file: file },
             {
                 onSuccess: () => {
-                    toast.success("Post ပြင်ဆင်ပြီးပါပြီ");
+                    toast.success("ပြင်ဆင်မှု အောင်မြင်ပါသည်");
                     setOpen(false);
                 },
                 onError: (err: any) => toast.error(err.message)
@@ -60,63 +59,86 @@ export function EditPostModal({ post, open, setOpen }: any) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-5xl h-[92vh] flex flex-col p-0 dark:bg-[#020617] border-none">
+            <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0 overflow-hidden bg-white dark:bg-[#020617] dark:border-slate-800 shadow-2xl">
                 <DialogHeader className="p-6 border-b dark:border-slate-800">
-                    <DialogTitle className="text-2xl font-black uppercase tracking-tighter">Edit Post</DialogTitle>
-                    <DialogDescription className="text-[10px] font-bold uppercase text-slate-400">
-                        Adjust your post details below and commit changes.
-                    </DialogDescription>
+                    <DialogTitle className="dark:text-white uppercase font-black text-2xl tracking-tighter">Edit Post</DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-8">
-                    {/* Title */}
-                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Title</Label>
-                        <Input 
-                            {...register("title")} 
-                            className={`h-14 text-xl font-bold dark:bg-transparent rounded-none border-t-0 border-x-0 border-b ${errors.title ? 'border-red-500' : 'dark:border-slate-800'}`} 
-                        />
-                        {errors.title && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.title.message}</p>}
+                <form id="post-edit-form" onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+                    
+                    {/* Image Area */}
+                    <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Post Imagery</Label>
+                        <div className="relative group border-2 border-dashed dark:border-slate-800 min-h-[200px] flex flex-col items-center justify-center p-4 bg-slate-900/10">
+                            {previewUrl ? (
+                                <div className="relative w-full flex justify-center">
+                                    <img src={previewUrl} alt="Preview" className="max-h-[300px] object-cover rounded shadow-2xl" />
+                                    <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 rounded-full h-8 w-8" onClick={() => { setFile(null); setPreviewUrl(null); }}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center gap-3 cursor-pointer py-10 w-full">
+                                    <ImageIcon className="w-8 h-8 text-slate-400" />
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase">Click to upload new image</p>
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                </label>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Summary */}
-                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Summary</Label>
-                        <Input 
-                            {...register("summary")} 
-                            className={`italic dark:bg-transparent rounded-none border-t-0 border-x-0 border-b ${errors.summary ? 'border-red-500' : 'dark:border-slate-800'}`} 
-                        />
-                        {errors.summary && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.summary.message}</p>}
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Headline */}
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-slate-400">Headline</Label>
+                            <Input {...register("title")} className="h-14 text-xl font-bold dark:bg-transparent rounded-none border-t-0 border-x-0 border-b dark:border-slate-800" />
+                        </div>
 
-                    {/* Description (MdEditor) */}
-                    <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Content</Label>
-                        <div className={`border rounded-none overflow-hidden ${errors.description ? 'border-red-500' : 'dark:border-slate-800'}`}>
-                            <MdEditor 
-                                modelValue={description} 
-                                onChange={(val) => setValue("description", val, { shouldValidate: true })} 
-                                language="en-US" 
-                                style={{ height: '400px' }} 
+                        {/* Category Dropdown (ဒါက Selected ဖြစ်စေမယ့်အပိုင်း) */}
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-slate-400">Category</Label>
+                            <Controller
+                                name="categoryId"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                        <SelectTrigger className="h-14 rounded-none dark:bg-transparent border-t-0 border-x-0 border-b dark:border-slate-800 focus:ring-0">
+                                            <SelectValue placeholder="Select Category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {categories.map((cat: any) => (
+                                                <SelectItem key={cat.id} value={cat.id}>
+                                                    {cat.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             />
                         </div>
-                        {errors.description && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.description.message}</p>}
                     </div>
 
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-6 items-center pt-4">
-                        <button type="button" onClick={() => setOpen(false)} className="text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors">
-                            Discard
-                        </button>
-                        <Button 
-                            type="submit" 
-                            disabled={updateMutation.isPending}
-                            className="h-12 px-12 bg-black text-white dark:bg-white dark:text-black font-black uppercase text-[10px] rounded-none"
-                        >
-                            {updateMutation.isPending ? <Loader2 className="animate-spin w-4 h-4" /> : "Commit Changes"}
-                        </Button>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Summary</Label>
+                        <Input {...register("summary")} className="italic dark:bg-transparent rounded-none border-t-0 border-x-0 border-b dark:border-slate-800" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-slate-400">Content</Label>
+                        <Controller name="description" control={control} render={({ field }) => (
+                            <div className="border dark:border-slate-800 rounded-none overflow-hidden">
+                                <MdEditor modelValue={field.value || ""} onChange={field.onChange} language="en-US" style={{ height: '400px' }} theme="dark" />
+                            </div>
+                        )} />
                     </div>
                 </form>
+
+                <div className="p-6 border-t dark:border-slate-800 flex justify-end gap-6 bg-slate-50 dark:bg-slate-900/20">
+                    <button type="button" className="text-[10px] font-black uppercase text-slate-400" onClick={() => setOpen(false)}>Discard</button>
+                    <Button form="post-edit-form" type="submit" disabled={updateMutation.isPending} className="h-12 px-14 bg-black text-white dark:bg-white dark:text-black font-black uppercase text-[10px] rounded-none">
+                        {updateMutation.isPending ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : "Commit Updates"}
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );

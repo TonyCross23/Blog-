@@ -16,8 +16,8 @@ export const App = () => {
         <Routes>
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
 
-          <Route path="/" element={<Home />} />
-          <Route path="/post/:id" element={<PostDetails />} />
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/post/:id" element={<ProtectedRoute><PostDetails /></ProtectedRoute>} />
 
           <Route path="/profile" element={
             <ProtectedRoute>

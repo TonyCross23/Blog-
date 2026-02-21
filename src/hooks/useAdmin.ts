@@ -22,7 +22,7 @@ export const useAdminPosts = (page: number, itemsPerPage: number) => {
             const to = from + itemsPerPage - 1;
             const { data, count, error } = await supabase
                 .from("posts")
-                .select("id, title, summary, description, created_at, categories(name)", { count: 'exact' })
+                .select("id, title, summary, description, image_url, category_id, created_at, categories(name)", { count: 'exact' })
                 .order("created_at", { ascending: false })
                 .range(from, to);
 
@@ -35,9 +35,38 @@ export const useAdminPosts = (page: number, itemsPerPage: number) => {
 //Post Update 
 export const useUpdatePost = () => {
     const queryClient = useQueryClient();
+
     return useMutation({
-        mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
-            const { error } = await supabase.from("posts").update(updates).eq("id", id);
+        mutationFn: async ({ id, updates, file }: { id: string; updates: any; file?: File | null }) => {
+            let uploadedImageUrl = updates.image_url;
+
+            if (file) {
+                const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('images') 
+                    .upload(`posts/${fileName}`, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: urlData } = supabase.storage
+                    .from('images')
+                    .getPublicUrl(`posts/${fileName}`);
+
+                uploadedImageUrl = urlData.publicUrl;
+            }
+
+            const { error } = await supabase
+                .from("posts")
+                .update({
+                    title: updates.title,
+                    summary: updates.summary,
+                    category_id: updates.categoryId,
+                    description: updates.description,
+                    image_url: uploadedImageUrl
+                })
+                .eq("id", id);
+
             if (error) throw error;
         },
         onSuccess: () => {
