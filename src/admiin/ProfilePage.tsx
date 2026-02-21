@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { useAuth } from "../context/AuthContext";
-import { supabase } from "../lib/supabaseClient";
 import { toast } from "sonner";
-import { Bell, BellOff, User, Mail } from "lucide-react";
+import { Bell, BellOff, User, Mail, Loader2 } from "lucide-react";
+import { useUpdateNotification } from "../hooks/useProfile";
 
 export default function ProfilePage() {
-  const { profile, loading } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const [isMuted, setIsMuted] = useState(false);
+
+  // Mutation Hook
+  const { mutate, isPending } = useUpdateNotification(profile?.id);
 
   useEffect(() => {
     if (profile) {
@@ -17,32 +20,28 @@ export default function ProfilePage() {
     }
   }, [profile]);
 
-  const handleToggle = async (checked: boolean) => {
-    if (!profile) return;
+  const handleToggle = (checked: boolean) => {
+    // Optimistic Update: UI 
     setIsMuted(checked);
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ send_emails: checked })
-        .eq('id', profile.id);
-
-      if (error) throw error;
-
-      if (checked === false) {
-        toast.info("Notifications Enabled", {
-          description: "You will receive emails when new posts are published.",
-        });
-      } else {
-        toast.success("Notifications Muted");
+    mutate(checked, {
+      onSuccess: () => {
+        if (checked === false) {
+          toast.info("Notifications Enabled", {
+            description: "You will receive emails when new posts are published.",
+          });
+        } else {
+          toast.success("Notifications Muted");
+        }
+      },
+      onError: (error: any) => {
+        setIsMuted(!checked);
+        toast.error("Update failed: " + error.message);
       }
-    } catch (error: any) {
-      setIsMuted(!checked);
-      toast.error("Update failed: " + error.message);
-    }
+    });
   };
 
-  if (loading) return (
+  if (authLoading) return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-[10px] font-black tracking-[0.4em] text-slate-400 animate-pulse uppercase">
         Retrieving Profile...
@@ -79,7 +78,14 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <h2 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase ml-1">Privacy & Alerts</h2>
           
-          <Card className="rounded-none border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-xl">
+          <Card className="rounded-none border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-xl relative overflow-hidden">
+            {/* Loading Overlay */}
+            {isPending && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              </div>
+            )}
+            
             <CardContent className="p-0">
               <div className="flex items-center justify-between p-8 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
                 <div className="flex gap-5 items-start">
@@ -101,6 +107,7 @@ export default function ProfilePage() {
                 <Switch 
                   checked={isMuted}
                   onCheckedChange={handleToggle}
+                  disabled={isPending}
                   className="data-[state=checked]:bg-black dark:data-[state=checked]:bg-white data-[state=unchecked]:bg-slate-200 dark:data-[state=unchecked]:bg-slate-800 scale-125 transition-all"
                 />
               </div>
