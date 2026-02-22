@@ -153,6 +153,7 @@ export function CreatePostModal() {
                                         preview={false} 
                                         style={{ height: '350px' }} 
                                         theme="dark"
+                                        language="en-US"
                                     />
                                 </div>
                             )}

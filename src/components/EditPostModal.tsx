@@ -127,7 +127,7 @@ export function EditPostModal({ post, open, setOpen }: any) {
                         <Label className="text-[10px] font-black uppercase text-slate-400">Content</Label>
                         <Controller name="description" control={control} render={({ field }) => (
                             <div className="border dark:border-slate-800 rounded-none overflow-hidden">
-                                <MdEditor modelValue={field.value || ""} onChange={field.onChange} language="en-US" style={{ height: '400px' }} theme="dark" />
+                                <MdEditor modelValue={field.value || ""} onChange={field.onChange} style={{ height: '400px' }} theme="dark" language="en-US" />
                             </div>
                         )} />
                     </div>
