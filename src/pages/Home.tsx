@@ -55,7 +55,7 @@ export default function Home() {
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {[...Array(itemsPerPage)].map((_, i) => (
-                        <div key={i} className="aspect-[4/5] bg-gray-50 dark:bg-slate-900/50 animate-pulse rounded-2xl" />
+                        <div key={i} className="aspect-[4/3] bg-gray-50 dark:bg-slate-900/50 animate-pulse rounded-2xl" />
                     ))}
                 </div>
             ) : (

@@ -3,13 +3,13 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MdEditor } from 'md-editor-rt';
-import { Loader2, Image as ImageIcon, X } from "lucide-react"; 
+import { Loader2, Image as ImageIcon, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { useUpdatePost } from "../hooks/useAdmin"; 
+import { useUpdatePost } from "../hooks/useAdmin";
 import { editPostSchema, type EditPostFormValues } from "../validation/editPost";
 import { useCategories } from "@/hooks/usePosts";
 
@@ -65,7 +65,7 @@ export function EditPostModal({ post, open, setOpen }: any) {
                 </DialogHeader>
 
                 <form id="post-edit-form" onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
-                    
+
                     {/* Image Area */}
                     <div className="space-y-3">
                         <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Post Imagery</Label>
@@ -94,7 +94,6 @@ export function EditPostModal({ post, open, setOpen }: any) {
                             <Input {...register("title")} className="h-14 text-xl font-bold dark:bg-transparent rounded-none border-t-0 border-x-0 border-b dark:border-slate-800" />
                         </div>
 
-                        {/* Category Dropdown (ဒါက Selected ဖြစ်စေမယ့်အပိုင်း) */}
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400">Category</Label>
                             <Controller
@@ -127,7 +126,7 @@ export function EditPostModal({ post, open, setOpen }: any) {
                         <Label className="text-[10px] font-black uppercase text-slate-400">Content</Label>
                         <Controller name="description" control={control} render={({ field }) => (
                             <div className="border dark:border-slate-800 rounded-none overflow-hidden">
-                                <MdEditor modelValue={field.value || ""} onChange={field.onChange} style={{ height: '400px' }} theme="dark" language="en-US" />
+                                <MdEditor modelValue={field.value || ""} onChange={field.onChange} preview={false} style={{ height: '350px' }} theme="dark" language="en-US" />
                             </div>
                         )} />
                     </div>
