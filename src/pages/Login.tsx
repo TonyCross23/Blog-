@@ -43,11 +43,6 @@ export const Login = () => {
             <span className="text-sm font-bold tracking-tight">Continue with Google</span>
           </button>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-[10px] text-slate-400 font-medium uppercase tracking-[0.2em]">
-          Secure Authentication
-        </p>
       </div>
     </div>
   )
