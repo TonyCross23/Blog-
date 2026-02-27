@@ -24,7 +24,7 @@ export const Login = () => {
             Sign In
           </h1>
           <p className="text-xs font-medium text-slate-400 mt-1">
-            Welcome to your admin dashboard
+            Welcome to Tony Blog Web Page
           </p>
         </div>
 

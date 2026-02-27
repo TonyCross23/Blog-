@@ -65,7 +65,7 @@ export const Navbar = () => {
       {!isMobileSearchOpen && (
         <div className="flex items-center gap-4 flex-shrink-0">
           <Link to="/" className="text-xl font-black tracking-tighter text-black dark:text-white">
-            MY BLOG
+            Tony BLOG
           </Link>
         </div>
       )}
